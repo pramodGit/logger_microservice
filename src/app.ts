@@ -1,3 +1,11 @@
 import "dotenv/config";
 
-console.log("Logger Microservice Started");
+import { connectConsumer } from "./kafka/consumer.js";
+
+const start = async () => {
+  await connectConsumer();
+
+  console.log("Logger Microservice Started");
+};
+
+start();
