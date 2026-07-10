@@ -1,5 +1,6 @@
 import { Kafka } from "kafkajs";
 import "dotenv/config";
+import { isDomainEvent } from "../events/validator.js";
 import { retry } from "../utils/retry.js";
 import { commitOffset } from "./commitOffset.js";
 import { processEvent } from "../services/processEvent.js";
@@ -36,12 +37,20 @@ export const connectConsumer = async () => {
       try {
       
         await retry(async () => {
-
           const event = JSON.parse(rawMessage);
 
-          await processEvent(event);
+          if (!isDomainEvent(event)) {
+            throw new Error("Invalid Domain Event");
+          }
 
+          await processEvent(event);
         });
+
+        await commitOffset(
+          topic,
+          partition,
+          message.offset
+        );
 
         await commitOffset(topic, partition, message.offset);
 
