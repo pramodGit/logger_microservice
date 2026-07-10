@@ -2,9 +2,13 @@ import {
   DomainEvent,
   EVENT_VERSION,
 } from "./event.types.js";
+import { EVENT_NAMES } from "./eventNames.js";
 
 const SUPPORTED_VERSIONS = new Set<number>(
   Object.values(EVENT_VERSION)
+);
+const SUPPORTED_EVENT_NAMES = new Set<string>(
+  Object.values(EVENT_NAMES)
 );
 
 export const isDomainEvent = (
@@ -18,7 +22,7 @@ export const isDomainEvent = (
 
   return (
     typeof e.eventId === "string" &&
-    typeof e.eventType === "string" &&
+    SUPPORTED_EVENT_NAMES.has(e.eventType as string) &&
     typeof e.version === "number" &&
     SUPPORTED_VERSIONS.has(e.version) &&
     typeof e.source === "string" &&

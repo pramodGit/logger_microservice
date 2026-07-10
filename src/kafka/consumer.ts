@@ -3,8 +3,8 @@ import "dotenv/config";
 import { isDomainEvent } from "../events/validator.js";
 import { retry } from "../utils/retry.js";
 import { commitOffset } from "./commitOffset.js";
-import { processEvent } from "../services/processEvent.js";
 import { publishDLQ } from "./publishDLQ.js";
+import { routeEvent } from "../router/eventRouter.js";
 
 const kafka = new Kafka({
   clientId: "logger-service",
@@ -30,20 +30,23 @@ export const connectConsumer = async () => {
   await consumer.run({
     autoCommit: false,
     eachMessage: async ({ topic, partition, message }) => {
-      if (!message.value) return;
+      if (message.value == null) {
+        console.warn("Received empty Kafka message");
+        return;
+      }
 
       const rawMessage = message.value.toString();
 
       try {
       
         await retry(async () => {
-          const event = JSON.parse(rawMessage);
+          const parsedEvent = JSON.parse(rawMessage);
 
-          if (!isDomainEvent(event)) {
+          if (!isDomainEvent(parsedEvent)) {
             throw new Error("Invalid Domain Event");
           }
 
-          await processEvent(event);
+          await routeEvent(parsedEvent);
         });
 
         await commitOffset(
