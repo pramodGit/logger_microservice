@@ -1,5 +1,9 @@
 import { Kafka } from "kafkajs";
 import "dotenv/config";
+import { retry } from "../utils/retry.js";
+import { commitOffset } from "./commitOffset.js";
+import { processEvent } from "../services/processEvent.js";
+import { publishDLQ } from "./publishDLQ.js";
 
 const kafka = new Kafka({
   clientId: "logger-service",
@@ -23,21 +27,36 @@ export const connectConsumer = async () => {
   console.log(`📌 Subscribed to ${process.env.KAFKA_TOPIC}`);
 
   await consumer.run({
+    autoCommit: false,
     eachMessage: async ({ topic, partition, message }) => {
       if (!message.value) return;
 
-      const event = JSON.parse(message.value.toString());
+      const rawMessage = message.value.toString();
 
-      console.log("\n==============================");
-      console.log("📥 EVENT RECEIVED");
-      console.log("==============================");
+      try {
+      
+        await retry(async () => {
 
-      console.log("Topic      :", topic);
-      console.log("Partition  :", partition);
-      console.log("Offset     :", message.offset);
+          const event = JSON.parse(rawMessage);
 
-      console.log("Payload");
-      console.log(event);
+          await processEvent(event);
+
+        });
+
+        await commitOffset(topic, partition, message.offset);
+
+      } catch (err) {
+        console.error("❌ Message Failed After Retries");
+
+        await publishDLQ(
+          rawMessage,
+          err instanceof Error ? err.message : "Unknown Error"
+        );
+
+        await commitOffset(topic, partition, message.offset);
+
+        console.log(`☠️ Sent to DLQ & Offset ${message.offset} committed`);
+      }
     },
   });
 };
