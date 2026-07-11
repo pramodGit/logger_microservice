@@ -15,7 +15,9 @@ export const retry = async (
     } catch (err) {
       lastError = err;
 
-      console.error(`❌ Attempt ${attempt} Failed`);
+      console.error(`❌ Attempt ${attempt} Failed == below is the actual issue :: ===> `);
+      console.error(err);
+      console.log("====================");
 
       if (attempt < retries) {
         await new Promise(resolve => setTimeout(resolve, delay));

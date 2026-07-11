@@ -55,8 +55,6 @@ export const connectConsumer = async () => {
           message.offset
         );
 
-        await commitOffset(topic, partition, message.offset);
-
       } catch (err) {
         console.error("❌ Message Failed After Retries");
 

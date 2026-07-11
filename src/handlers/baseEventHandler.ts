@@ -1,4 +1,5 @@
 import { DomainEvent } from "../events/event.types.js";
+import { eventRepository } from "../repositories/index.js";
 import {
   hasProcessed,
   markProcessed,
@@ -22,11 +23,13 @@ export abstract class BaseEventHandler<T = unknown>
 
     await this.beforeProcess(event);
 
-    console.log("💾 Saving to database...");
+    console.log("💾 Saving event..");
 
-    await new Promise((resolve) =>
-      setTimeout(resolve, 2000)
-    );
+    // await new Promise((resolve) =>
+    //   setTimeout(resolve, 2000)
+    // );
+
+    await eventRepository.save(event);
 
     markProcessed(event.eventId);
 
