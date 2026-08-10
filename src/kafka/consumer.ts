@@ -5,6 +5,7 @@ import { retry } from "../utils/retry.js";
 import { commitOffset } from "./commitOffset.js";
 import { publishDLQ } from "./publishDLQ.js";
 import { routeEvent } from "../router/eventRouter.js";
+import { logger } from "../logger/logger.js";
 
 const kafka = new Kafka({
   clientId: "logger-service",
@@ -18,20 +19,36 @@ export const consumer = kafka.consumer({
 export const connectConsumer = async () => {
   await consumer.connect();
 
-  console.log("✅ Logger Consumer Connected");
+  logger.info(
+    {
+      groupId: process.env.GROUP_ID,
+    },
+    "Kafka consumer connected"
+  );
 
   await consumer.subscribe({
     topic: process.env.KAFKA_TOPIC!,
     fromBeginning: false,
   });
 
-  console.log(`📌 Subscribed to ${process.env.KAFKA_TOPIC}`);
+  logger.info(
+    {
+      topic: process.env.KAFKA_TOPIC,
+    },
+    "Subscribed to Kafka topic"
+  );
 
   await consumer.run({
     autoCommit: false,
     eachMessage: async ({ topic, partition, message }) => {
       if (message.value == null) {
-        console.warn("Received empty Kafka message");
+        logger.warn(
+          {
+            topic,
+            partition,
+          },
+          "Received empty Kafka message"
+        );
         return;
       }
 
@@ -56,7 +73,15 @@ export const connectConsumer = async () => {
         );
 
       } catch (err) {
-        console.error("❌ Message Failed After Retries");
+        logger.error(
+          {
+            topic,
+            partition,
+            offset: message.offset,
+            error: err instanceof Error ? err.message : err,
+          },
+          "Message processing failed after retries"
+        );
 
         await publishDLQ(
           rawMessage,
@@ -65,7 +90,14 @@ export const connectConsumer = async () => {
 
         await commitOffset(topic, partition, message.offset);
 
-        console.log(`☠️ Sent to DLQ & Offset ${message.offset} committed`);
+        logger.warn(
+          {
+            topic,
+            partition,
+            offset: message.offset,
+          },
+          "Message sent to DLQ"
+        );
       }
     },
   });

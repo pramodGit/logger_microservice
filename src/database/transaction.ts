@@ -1,5 +1,6 @@
 import { PoolConnection } from "mysql2/promise";
 import { pool } from "./mysql.js";
+import { logger } from "../logger/logger.js";
 
 export const withTransaction = async <T>(
   callback: (connection: PoolConnection) => Promise<T>
@@ -7,7 +8,7 @@ export const withTransaction = async <T>(
   const connection = await pool.getConnection();
 
   try {
-    console.log("🟢 BEGIN");
+    logger.info("🟢 BEGIN");
 
     await connection.beginTransaction();
 
@@ -15,13 +16,13 @@ export const withTransaction = async <T>(
 
     await connection.commit();
 
-    console.log("🟢 COMMIT");
+    logger.info("🟢 COMMIT");
 
     return result;
   } catch (err) {
     await connection.rollback();
 
-    console.log("🔴 ROLLBACK");
+    logger.info("🔴 ROLLBACK");
 
     throw err;
   } finally {

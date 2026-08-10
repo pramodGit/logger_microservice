@@ -1,4 +1,5 @@
 import { DomainEvent } from "../events/event.types.js";
+import { logger } from "../logger/logger.js";
 import { eventRepository } from "../repositories/index.js";
 import {
   hasProcessed,
@@ -7,33 +8,50 @@ import {
 import { EventHandler } from "./eventHandler.js";
 
 export abstract class BaseEventHandler<T = unknown>
-  implements EventHandler<T>
-{
+  implements EventHandler {
+
   async handle(
     event: DomainEvent<T>
   ): Promise<void> {
-    console.log("Event ID :", event.eventId);
+
+    logger.info(
+      {
+        eventId: event.eventId,
+        eventType: event.eventType,
+        version: event.version,
+      },
+      "Processing event"
+    );
 
     if (hasProcessed(event.eventId)) {
-      console.log(
-        `⚠️ Duplicate Event Skipped : ${event.eventId}`
+      logger.warn(
+        {
+          eventId: event.eventId,
+        },
+        "Duplicate event skipped"
       );
       return;
     }
 
     await this.beforeProcess(event);
 
-    console.log("💾 Saving event..");
-
-    // await new Promise((resolve) =>
-    //   setTimeout(resolve, 2000)
-    // );
+    logger.info(
+      {
+        eventId: event.eventId,
+      },
+      "Saving event"
+    );
 
     await eventRepository.save(event);
 
     markProcessed(event.eventId);
 
-    console.log("✅ Processing Successful");
+    logger.info(
+      {
+        eventId: event.eventId,
+      },
+      "Event processed successfully"
+    );
   }
 
   protected abstract beforeProcess(

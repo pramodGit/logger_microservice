@@ -1,5 +1,6 @@
 import { Kafka } from "kafkajs";
 import "dotenv/config";
+import { logger } from "../logger/logger";
 
 const kafka = new Kafka({
   clientId: "logger-service",
@@ -11,5 +12,5 @@ export const producer = kafka.producer();
 export const connectProducer = async () => {
   await producer.connect();
 
-  console.log("✅ Logger Producer Connected");
+  logger.info("Logger Producer Connected");
 };

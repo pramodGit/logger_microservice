@@ -1,3 +1,4 @@
+import { logger } from "../logger/logger.js";
 import { consumer } from "./consumer.js";
 
 export const commitOffset = async (
@@ -13,5 +14,12 @@ export const commitOffset = async (
     },
   ]);
 
-  console.log(`✅ Offset ${offset} committed`);
+  logger.info(
+    {
+      topic,
+      partition,
+      committedOffset: Number(offset) + 1,
+    },
+    "Kafka offset committed"
+  );
 };

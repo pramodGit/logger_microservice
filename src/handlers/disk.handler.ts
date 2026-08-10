@@ -1,6 +1,7 @@
 import { DomainEvent } from "../events/event.types.js";
 import { DiskHighPayload } from "../events/event.payloads.js";
 import { BaseEventHandler } from "./baseEventHandler.js";
+import { logger } from "../logger/logger.js";
 
 export class DiskHandler extends BaseEventHandler<DiskHighPayload> {
 
@@ -8,12 +9,11 @@ export class DiskHandler extends BaseEventHandler<DiskHighPayload> {
     event: DomainEvent<DiskHighPayload>
   ): Promise<void> {
 
-    console.log("📦 Disk Event");
+    logger.info("Disk Event");
 
-    console.log(
-      "Disk Usage :",
-      event.payload.usage,
-      "%"
+    logger.info(
+      { usage: event.payload.usage },
+      "Disk Usage"
     );
   }
 

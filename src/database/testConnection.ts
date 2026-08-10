@@ -1,3 +1,4 @@
+import { logger } from "../logger/logger.js";
 import { pool } from "./mysql.js";
 
 export const testDatabaseConnection = async () => {
@@ -5,7 +6,7 @@ export const testDatabaseConnection = async () => {
 
     const connection = await pool.getConnection();
 
-    console.log("✅ MySQL Connected");
+    logger.info("MySQL Connected");
 
     connection.release();
   } catch (err) {

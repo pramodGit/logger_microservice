@@ -1,6 +1,7 @@
 import { DomainEvent } from "../events/event.types.js";
 import { ProcessUpPayload } from "../events/event.payloads.js";
 import { BaseEventHandler } from "./baseEventHandler.js";
+import { logger } from "../logger/logger.js";
 
 export class ProcessUpHandler
   extends BaseEventHandler<ProcessUpPayload> {
@@ -9,12 +10,11 @@ export class ProcessUpHandler
     event: DomainEvent<ProcessUpPayload>
   ): Promise<void> {
 
-    console.log("✅ Process Up");
-
-    console.log(
-      "Process :",
-      event.payload.processName
+    logger.info(
+      {
+        processName: event.payload.processName,
+      },
+      "Process up"
     );
   }
-
 }

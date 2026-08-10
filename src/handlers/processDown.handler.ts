@@ -1,6 +1,7 @@
 import { DomainEvent } from "../events/event.types.js";
 import { ProcessDownPayload } from "../events/event.payloads.js";
 import { BaseEventHandler } from "./baseEventHandler.js";
+import { logger } from "../logger/logger.js";
 
 export class ProcessDownHandler
   extends BaseEventHandler<ProcessDownPayload> {
@@ -9,12 +10,11 @@ export class ProcessDownHandler
     event: DomainEvent<ProcessDownPayload>
   ): Promise<void> {
 
-    console.log("🚨 Process Down");
-
-    console.log(
-      "Process :",
-      event.payload.processName
+    logger.warn(
+      {
+        processName: event.payload.processName,
+      },
+      "Process down"
     );
   }
-
 }

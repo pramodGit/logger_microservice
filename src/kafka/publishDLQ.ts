@@ -1,3 +1,4 @@
+import { logger } from "../logger/logger.js";
 import { producer } from "./producer.js";
 
 export const publishDLQ = async (
@@ -17,5 +18,10 @@ export const publishDLQ = async (
     ],
   });
 
-  console.log("☠️ Published to DLQ");
+  logger.warn(
+    {
+      topic: process.env.DLQ_TOPIC,
+    },
+    "Message published to DLQ"
+  );
 };

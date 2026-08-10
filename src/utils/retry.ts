@@ -1,26 +1,45 @@
+import { logger } from "../logger/logger.js";
+
 export const retry = async (
   operation: () => Promise<void>,
   retries = 3,
   delay = 1000
 ): Promise<void> => {
+
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= retries; attempt++) {
+
+    logger.info(
+      {
+        attempt,
+        retries,
+      },
+      "Retry attempt"
+    );
+
     try {
-      console.log(`🔄 Retry ${attempt}/${retries}`);
 
       await operation();
-
       return;
+
     } catch (err) {
+
       lastError = err;
 
-      console.error(`❌ Attempt ${attempt} Failed == below is the actual issue :: ===> `);
-      console.error(err);
-      console.log("====================");
+      logger.error(
+        {
+          attempt,
+          retries,
+          error: err instanceof Error ? err.message : err,
+        },
+        "Retry attempt failed"
+      );
 
       if (attempt < retries) {
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise(resolve =>
+          setTimeout(resolve, delay)
+        );
       }
     }
   }

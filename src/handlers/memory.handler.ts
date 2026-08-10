@@ -1,6 +1,7 @@
 import { DomainEvent } from "../events/event.types.js";
 import { MemoryHighPayload } from "../events/event.payloads.js";
 import { BaseEventHandler } from "./baseEventHandler.js";
+import { logger } from "../logger/logger.js";
 
 export class MemoryHandler extends BaseEventHandler<MemoryHighPayload> {
 
@@ -8,12 +9,11 @@ export class MemoryHandler extends BaseEventHandler<MemoryHighPayload> {
     event: DomainEvent<MemoryHighPayload>
   ): Promise<void> {
 
-    console.log("📦 Memory Event");
+    logger.info("Memory Event");
 
-    console.log(
-      "Memory Usage :",
-      event.payload.usage,
-      "%"
+    logger.info(
+      { usage: event.payload.usage },
+      "Memory Usage"
     );
   }
 
