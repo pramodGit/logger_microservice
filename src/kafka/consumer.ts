@@ -16,8 +16,12 @@ export const consumer = kafka.consumer({
   groupId: process.env.GROUP_ID!,
 });
 
+export let isConsumerConnected = false;
+
 export const connectConsumer = async () => {
   await consumer.connect();
+
+  isConsumerConnected = true;
 
   logger.info(
     {
