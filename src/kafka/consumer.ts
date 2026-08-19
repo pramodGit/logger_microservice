@@ -6,6 +6,12 @@ import { commitOffset } from "./commitOffset.js";
 import { publishDLQ } from "./publishDLQ.js";
 import { routeEvent } from "../router/eventRouter.js";
 import { logger } from "../logger/logger.js";
+import {
+  eventsProcessed,
+  eventsFailed,
+  eventsDLQ,
+  eventProcessingDuration,
+} from "../metrics/metrics.js";
 
 const kafka = new Kafka({
   clientId: "logger-service",
@@ -53,13 +59,16 @@ export const connectConsumer = async () => {
           },
           "Received empty Kafka message"
         );
+
         return;
       }
 
       const rawMessage = message.value.toString();
 
+      // Start processing timer
+      const endTimer = eventProcessingDuration.startTimer();
+
       try {
-      
         await retry(async () => {
           const parsedEvent = JSON.parse(rawMessage);
 
@@ -70,13 +79,29 @@ export const connectConsumer = async () => {
           await routeEvent(parsedEvent);
         });
 
+        // Business processing successful
+        eventsProcessed.inc();
+
         await commitOffset(
           topic,
           partition,
           message.offset
         );
 
+        logger.info(
+          {
+            topic,
+            partition,
+            offset: message.offset,
+          },
+          "Event processed successfully"
+        );
+
       } catch (err) {
+
+        // Processing failed after all retries
+        eventsFailed.inc();
+
         logger.error(
           {
             topic,
@@ -89,10 +114,19 @@ export const connectConsumer = async () => {
 
         await publishDLQ(
           rawMessage,
-          err instanceof Error ? err.message : "Unknown Error"
+          err instanceof Error
+            ? err.message
+            : "Unknown Error"
         );
 
-        await commitOffset(topic, partition, message.offset);
+        // Message successfully moved to DLQ
+        eventsDLQ.inc();
+
+        await commitOffset(
+          topic,
+          partition,
+          message.offset
+        );
 
         logger.warn(
           {
@@ -102,6 +136,10 @@ export const connectConsumer = async () => {
           },
           "Message sent to DLQ"
         );
+      } finally {
+
+        // Stop processing timer
+        endTimer();
       }
     },
   });

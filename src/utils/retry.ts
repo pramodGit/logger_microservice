@@ -1,4 +1,5 @@
 import { logger } from "../logger/logger.js";
+import { eventsRetried } from "../metrics/metrics.js";
 
 export const retry = async (
   operation: () => Promise<void>,
@@ -37,6 +38,8 @@ export const retry = async (
       );
 
       if (attempt < retries) {
+        eventsRetried.inc();
+
         await new Promise(resolve =>
           setTimeout(resolve, delay)
         );

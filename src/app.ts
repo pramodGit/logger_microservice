@@ -6,12 +6,14 @@ import { connectProducer } from "./kafka/producer.js";
 import { testDatabaseConnection } from "./database/testConnection.js";
 import { logger } from "./logger/logger.js";
 import healthRoutes from "./health/health.routes.js";
+import metricsRouter from "./metrics/metrics.routes.js";
 
 const app = express();
 
 app.use(express.json());
 
 app.use(healthRoutes);
+app.use(metricsRouter);
 
 const PORT = Number(process.env.PORT ?? 3001);
 
